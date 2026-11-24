@@ -485,7 +485,7 @@ export function extractSurfaceNetsMesh({
   // Use clean vertex sharing per triplanar axis (3 possible UV slots per vertex max -> keeps vertex count compact!)
   const remap = [new Int32Array(vCount).fill(-1), new Int32Array(vCount).fill(-1), new Int32Array(vCount).fill(-1)];
   const indices = [];
-  const uvScale = 2.6;
+  const uvScale = 5.6;
 
   const getVertex = (origIdx, planeAxis) => {
     const existing = remap[planeAxis][origIdx];

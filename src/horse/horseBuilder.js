@@ -3,29 +3,21 @@ import { createEquineSkeleton, JOINTS } from './anatomy.js';
 import { buildUnifiedHorseBodyGeometry, SDF_EYE_CENTERS } from './horseSDF.js';
 import { buildEarGeometries, createEquineEyeGroup } from './headGeometry.js';
 import { buildHoofAndShoeGeometries } from './legGeometry.js';
-import {
-  buildFetlockTuftsGeometry,
-  buildManeAndForelockGeometry,
-  buildTailHairGeometry,
-} from './hairGeometry.js';
+import { buildManeAndForelockGeometry, buildTailHairGeometry } from './hairGeometry.js';
 import { applyCoatVertexColors, COAT_PRESETS, createEquineMaterials } from './materials.js';
 
 /**
- * Assemble the complete, 100% seamless SDF-sculpted, fully rigged & skinned 3D Horse!
- * Returns { group, rig, materials, eyes, setCoatPreset, getStats }.
+ * Assemble the complete, 100% seamless V5 SDF-sculpted, rigged & skinned 3D Horse!
  */
 export function createRealisticHorse(initialCoat = 'bay') {
   const group = new THREE.Group();
   group.name = 'RealisticHorse';
 
-  // 1. Build 39-bone Equine Skeleton in exact world rest pose
   const rig = createEquineSkeleton();
   group.add(rig.rootBone);
   group.updateMatrixWorld(true);
 
-  // 2. Build physically calibrated PBR Materials
   const materials = createEquineMaterials(initialCoat);
-
   const coatGeometries = [];
 
   const bindPart = (geo, material, name, castShadow = true) => {
@@ -39,29 +31,26 @@ export function createRealisticHorse(initialCoat = 'bay') {
     return mesh;
   };
 
-  // 3. ONE 100% Seamless, Watertight, SDF-Sculpted Equine Body Mesh
-  //    (Torso + Withers + Deep Pectoral Chest + Arched Neck + Poll + Head/Jowl/Nostrils/Lips +
-  //     All 4 Legs through Shoulders/Elbows/Knees/Stifles/Gaskins/Sharp Hocks/Tendons/Fetlocks/Pasterns + Tail Dock!)
+  // 1. Unified Seamless SDF Body Mesh
   const bodyGeo = buildUnifiedHorseBodyGeometry(rig.boneIndex);
   coatGeometries.push({ geo: bodyGeo, offset: null });
   bindPart(bodyGeo, materials.coatMaterial, 'EquineBody');
 
-  // 4. Four Sculpted Keratin Hooves + Forged Steel Horseshoes resting cleanly on y = 0.000
+  // 2. Proportionally Sculpted Hooves + Forged Steel Horseshoes
   for (const legKey of ['foreHoofL', 'foreHoofR', 'hindHoofL', 'hindHoofR']) {
     const { hoofGeo, shoeGeo } = buildHoofAndShoeGeometries(legKey, rig.boneIndex);
     bindPart(hoofGeo, materials.hoofMaterial, `${legKey}_Hoof`);
     bindPart(shoeGeo, materials.shoeMaterial, `${legKey}_Shoe`);
   }
 
-  // 5. Sculpted Concave Tulip Ears firmly seated into the poll cranium (parented to earL & earR bones!)
+  // 3. Alert Concave Tulip Ears firmly seated into the poll cranium
   const earOffsetL = new THREE.Vector3(...JOINTS.earL);
   const earOffsetR = new THREE.Vector3(...JOINTS.earR);
 
   const earGeoL = buildEarGeometries(+1);
   const earGeoR = buildEarGeometries(-1);
-  // Extend ear root 1.8 cm downward so it seats solidly inside the poll crown with ZERO gap from any angle!
-  earGeoL.translate(0, -0.018, 0);
-  earGeoR.translate(0, -0.018, 0);
+  earGeoL.translate(0, -0.020, 0);
+  earGeoR.translate(0, -0.020, 0);
 
   coatGeometries.push({ geo: earGeoL, offset: earOffsetL });
   coatGeometries.push({ geo: earGeoR, offset: earOffsetR });
@@ -70,17 +59,17 @@ export function createRealisticHorse(initialCoat = 'bay') {
   earMeshL.name = 'EarL';
   earMeshL.castShadow = true;
   earMeshL.receiveShadow = true;
-  earMeshL.rotation.set(0.18, 0.08, -0.20);
+  earMeshL.rotation.set(0.16, 0.08, -0.17);
   rig.boneMap.earL.add(earMeshL);
 
   const earMeshR = new THREE.Mesh(earGeoR, materials.coatMaterial);
   earMeshR.name = 'EarR';
   earMeshR.castShadow = true;
   earMeshR.receiveShadow = true;
-  earMeshR.rotation.set(0.18, -0.08, 0.20);
+  earMeshR.rotation.set(0.16, -0.08, 0.17);
   rig.boneMap.earR.add(earMeshR);
 
-  // 6. Soulful Glossy Equine Eyes with Horizontal Bar Pupils, Wet Corneas & Animated Eyelids
+  // 4. Deep-Set Soulful Almond Equine Eyes with Coat-Matched Fleshy Eyelids
   const headBoneWorld = new THREE.Vector3(...JOINTS.head);
   const eyeL = createEquineEyeGroup(+1, materials);
   const eyeR = createEquineEyeGroup(-1, materials);
@@ -89,14 +78,12 @@ export function createRealisticHorse(initialCoat = 'bay') {
   rig.boneMap.head.add(eyeL.group);
   rig.boneMap.head.add(eyeR.group);
 
-  // 7. SDF-Conformed Lush Layered Mane, Forelock, Flowing Tail & Fetlock Tufts (ZERO clipping!)
+  // 5. Volumetric 3D Sculpted Mane, Side-Swept Forelock & Lush Flowing Tail
   const maneGeo = buildManeAndForelockGeometry(rig.boneIndex);
   const tailHairGeo = buildTailHairGeometry(rig.boneIndex);
-  const fetlockGeo = buildFetlockTuftsGeometry(rig.boneIndex);
 
   bindPart(maneGeo, materials.hairMaterial, 'ManeAndForelock');
   bindPart(tailHairGeo, materials.hairMaterial, 'TailHair');
-  bindPart(fetlockGeo, materials.hairMaterial, 'FetlockTufts');
 
   // Instant Coat Preset Switcher
   function setCoatPreset(presetKey) {
@@ -105,16 +92,18 @@ export function createRealisticHorse(initialCoat = 'bay') {
       applyCoatVertexColors(item.geo, presetKey, item.offset);
     }
     materials.coatMaterial.sheenColor.setHex(preset.coatSheen);
+    materials.coatMaterial.specularColor.setHex(preset.coatSpecular);
     materials.hairMaterial.color.setHex(preset.hairColor);
     materials.hairMaterial.sheenColor.setHex(preset.hairSheen);
     materials.hairMaterial.specularColor.setHex(preset.hairSheen);
     materials.hoofMaterial.color.setHex(preset.hoofColor);
     materials.lidMaterial.color.setRGB(
-      preset.muzzleColor[0] * 0.72,
-      preset.muzzleColor[1] * 0.68,
-      preset.muzzleColor[2] * 0.66,
+      preset.baseColor[0] * 0.42 + preset.muzzleColor[0] * 0.45,
+      preset.baseColor[1] * 0.40 + preset.muzzleColor[1] * 0.45,
+      preset.baseColor[2] * 0.40 + preset.muzzleColor[2] * 0.45,
       THREE.SRGBColorSpace
     );
+    materials.lidMaterial.sheenColor.setHex(preset.coatSheen);
   }
 
   setCoatPreset(initialCoat);

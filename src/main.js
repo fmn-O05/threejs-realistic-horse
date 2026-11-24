@@ -6,13 +6,14 @@ import { COAT_PRESETS } from './horse/materials.js';
 import { createSceneEnvironment, LIGHTING_PRESETS } from './environment.js';
 
 export const CAMERA_PRESETS = {
-  hero:    { label: '3/4 Hero',     pos: [3.42, 1.54, 2.90],  target: [0.0, 1.13, 0.14] },
-  side:    { label: 'Side Profile', pos: [4.25, 1.18, 0.14],  target: [0.0, 1.08, 0.14] },
-  sideR:   { label: 'Right Side',   pos: [-4.25, 1.18, 0.14], target: [0.0, 1.08, 0.14] },
-  head:    { label: 'Head Detail',  pos: [1.05, 1.94, 2.08],  target: [0.0, 1.84, 1.28] },
-  front:   { label: 'Front',        pos: [0.16, 1.28, 4.65],  target: [0.0, 1.10, 0.20] },
-  rear:    { label: 'Rear 3/4',     pos: [-2.95, 1.42, -2.95], target: [0.0, 1.08, -0.05] },
-  top:     { label: 'Overhead',     pos: [2.15, 3.85, 1.55],  target: [0.0, 1.10, 0.15] },
+  // Default 3/4 Hero frames the sunlit right-front profile showcasing the cascading mane, noble head & sculpted muscles!
+  hero:    { label: '3/4 Hero',     pos: [-3.35, 1.54, 2.85], target: [0.0, 1.15, 0.14] },
+  side:    { label: 'Side Profile', pos: [-4.25, 1.20, 0.14], target: [0.0, 1.10, 0.14] },
+  sideL:   { label: 'Left Side',    pos: [ 4.25, 1.20, 0.14], target: [0.0, 1.10, 0.14] },
+  head:    { label: 'Head Detail',  pos: [-1.02, 1.98, 2.02], target: [0.0, 1.88, 1.28] },
+  front:   { label: 'Front',        pos: [-0.16, 1.30, 4.65], target: [0.0, 1.12, 0.20] },
+  rear:    { label: 'Rear 3/4',     pos: [-2.95, 1.44, -2.95], target: [0.0, 1.10, -0.05] },
+  top:     { label: 'Overhead',     pos: [-2.15, 3.85, 1.55], target: [0.0, 1.12, 0.15] },
 };
 
 function init() {
