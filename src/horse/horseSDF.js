@@ -279,10 +279,10 @@ export function evalHorseBodySDF(ax, y, z) {
     const nostrilHole = sdEllipsoid(x, y, z, 0.058, 1.704, 1.510, 0.016, 0.015, 0.018, C_085, S_085);
     dHead = ssub(dHead, nostrilHole, 0.012);
 
-    // Subtle Chin Groove & Intermandibular Hollow underneath jaw
-    const chinGroove = sdEllipsoid(x, y, z, 0.0, 1.630, 1.452, 0.030, 0.014, 0.015, C_065, S_065);
-    const jawHollow  = sdTaperedCapsule(x, y, z, 0, 1.81, 1.20, 0, 1.68, 1.38, 0.022, 0.015);
-    dHead = ssub(dHead, chinGroove, 0.012);
+    // Subtle Chin Groove & Intermandibular Hollow underneath jaw (smooth & clean in profile!)
+    const chinGroove = sdEllipsoid(x, y, z, 0.0, 1.632, 1.452, 0.024, 0.009, 0.010, C_065, S_065);
+    const jawHollow  = sdTaperedCapsule(x, y, z, 0, 1.81, 1.20, 0, 1.68, 1.38, 0.020, 0.014);
+    dHead = ssub(dHead, chinGroove, 0.014);
     dHead = ssub(dHead, jawHollow, 0.018);
 
     dBody = smin(dBody, dHead, 0.046);
@@ -481,11 +481,12 @@ function distToSegment(px, py, pz, a, b) {
 export function evalUnifiedHorseSkinWeights(x, y, z, boneIndex) {
   const tag = x >= 0 ? 'L' : 'R';
 
-  // Below belly line (y < 0.89), 100% of every leg vertex belongs strictly to its leg bone chain
-  const belowBelly = smoothstep(0.96, 0.86, y);
+  // Below belly line (y < 0.86), 100% of every leg vertex belongs strictly to its leg bone chain;
+  // Above it, wide elastic shoulder/haunch transition prevents any harsh skin step at peak gallop extension!
+  const belowBelly = smoothstep(0.95, 0.82, y);
 
-  const upperForeMask = smoothstep(1.26, 0.96, y) * smoothstep(0.06, 0.34, z) * smoothstep(0.92, 0.70, z) * smoothstep(0.06, 0.14, Math.abs(x));
-  const upperHindMask = smoothstep(1.30, 0.98, y) * smoothstep(-0.04, -0.28, z) * smoothstep(0.05, 0.14, Math.abs(x));
+  const upperForeMask = smoothstep(1.38, 0.88, y) * smoothstep(0.10, 0.38, z) * smoothstep(0.94, 0.68, z) * smoothstep(0.05, 0.14, Math.abs(x));
+  const upperHindMask = smoothstep(1.42, 0.88, y) * smoothstep(-0.04, -0.30, z) * smoothstep(0.05, 0.14, Math.abs(x));
 
   const foreMask = clamp(z > 0.0 ? Math.max(belowBelly, upperForeMask) : upperForeMask * (1 - belowBelly), 0, 1);
   const hindMask = clamp(z <= 0.0 ? Math.max(belowBelly, upperHindMask) : upperHindMask * (1 - belowBelly), 0, 1);
@@ -505,11 +506,11 @@ export function evalUnifiedHorseSkinWeights(x, y, z, boneIndex) {
     const kn = JOINTS[`knee${tag}`];
     const ff = JOINTS[`foreFetlock${tag}`];
     const fc = JOINTS[`foreCoronet${tag}`];
-    const elbowGate = smoothstep(1.02, 0.88, y);
+    const elbowGate = smoothstep(1.06, 0.78, y);
     const segs = [
-      { bone: boneIndex[`shoulder${tag}`], a: sh, b: el, s: 0.090, gate: 1.0 },
-      { bone: boneIndex[`elbow${tag}`],    a: el, b: kn, s: 0.068, gate: elbowGate },
-      { bone: boneIndex[`knee${tag}`],     a: kn, b: ff, s: 0.052, gate: elbowGate },
+      { bone: boneIndex[`shoulder${tag}`], a: sh, b: el, s: 0.125, gate: 1.0 },
+      { bone: boneIndex[`elbow${tag}`],    a: el, b: kn, s: 0.085, gate: elbowGate },
+      { bone: boneIndex[`knee${tag}`],     a: kn, b: ff, s: 0.054, gate: elbowGate },
       { bone: boneIndex[`foreFetlock${tag}`], a: ff, b: fc, s: 0.046, gate: elbowGate },
       { bone: boneIndex[`foreCoronet${tag}`], a: fc, b: [fc[0], 0.0, fc[2] + 0.04], s: 0.042, gate: elbowGate },
     ];
@@ -518,7 +519,7 @@ export function evalUnifiedHorseSkinWeights(x, y, z, boneIndex) {
     for (const seg of segs) {
       if (seg.gate <= 1e-4) continue;
       const { dist } = distToSegment(x, y, z, seg.a, seg.b);
-      const w = Math.exp(-Math.pow(dist / seg.s, 2.2)) * seg.gate;
+      const w = Math.exp(-Math.pow(dist / seg.s, 2.0)) * seg.gate;
       raw.push([seg.bone, w]);
       sum += w;
     }
@@ -535,11 +536,11 @@ export function evalUnifiedHorseSkinWeights(x, y, z, boneIndex) {
     const hk = JOINTS[`hock${tag}`];
     const hf = JOINTS[`hindFetlock${tag}`];
     const hc = JOINTS[`hindCoronet${tag}`];
-    const stifleGate = smoothstep(1.04, 0.89, y);
+    const stifleGate = smoothstep(1.08, 0.78, y);
     const segs = [
-      { bone: boneIndex[`hip${tag}`],         a: [hi[0], hi[1], hi[2] - 0.06], b: st, s: 0.115, gate: 1.0 },
-      { bone: boneIndex[`stifle${tag}`],      a: st, b: hk, s: 0.068, gate: stifleGate },
-      { bone: boneIndex[`hock${tag}`],        a: hk, b: hf, s: 0.052, gate: stifleGate },
+      { bone: boneIndex[`hip${tag}`],         a: [hi[0], hi[1], hi[2] - 0.06], b: st, s: 0.145, gate: 1.0 },
+      { bone: boneIndex[`stifle${tag}`],      a: st, b: hk, s: 0.082, gate: stifleGate },
+      { bone: boneIndex[`hock${tag}`],        a: hk, b: hf, s: 0.054, gate: stifleGate },
       { bone: boneIndex[`hindFetlock${tag}`], a: hf, b: hc, s: 0.046, gate: stifleGate },
       { bone: boneIndex[`hindCoronet${tag}`], a: hc, b: [hc[0], 0.0, hc[2] + 0.04], s: 0.042, gate: stifleGate },
     ];
@@ -548,7 +549,7 @@ export function evalUnifiedHorseSkinWeights(x, y, z, boneIndex) {
     for (const seg of segs) {
       if (seg.gate <= 1e-4) continue;
       const { dist } = distToSegment(x, y, z, seg.a, seg.b);
-      const w = Math.exp(-Math.pow(dist / seg.s, 2.2)) * seg.gate;
+      const w = Math.exp(-Math.pow(dist / seg.s, 2.0)) * seg.gate;
       raw.push([seg.bone, w]);
       sum += w;
     }

@@ -117,7 +117,7 @@ function init() {
 
     animator.update(dt);
     if (!animator.paused && dt > 0) {
-      environment.updateGroundMotion(dt, animator.mode, animator.speed);
+      environment.updateGroundMotion(dt, animator.currentSpeedMps);
     }
 
     controls.update();

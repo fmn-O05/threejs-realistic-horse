@@ -322,9 +322,10 @@ export function buildTailHairGeometry(boneIndex) {
   const buffers = createBuffers();
 
   const tailControls = [
-    { t: 0.00, bone: boneIndex.tailBase },
-    { t: 0.24, bone: boneIndex.tailMid },
-    { t: 0.60, bone: boneIndex.tailLower },
+    { t: 0.00, bone: boneIndex.pelvis },
+    { t: 0.12, bone: boneIndex.tailBase },
+    { t: 0.32, bone: boneIndex.tailMid },
+    { t: 0.64, bone: boneIndex.tailLower },
     { t: 0.96, bone: boneIndex.tailTip },
   ];
 
@@ -334,16 +335,15 @@ export function buildTailHairGeometry(boneIndex) {
     const ringAngle = (i * 2.399963) % (Math.PI * 2);
     const rootU = rng() * 0.72;
 
-    const dockY = THREE.MathUtils.lerp(1.455, 1.32, rootU);
-    const dockZ = THREE.MathUtils.lerp(-0.78, -0.87, rootU) - Math.sin(rootU * Math.PI) * 0.015;
+    const dockY = THREE.MathUtils.lerp(1.455, 1.34, rootU);
+    const dockZ = THREE.MathUtils.lerp(-0.745, -0.835, rootU) - Math.sin(rootU * Math.PI) * 0.012;
 
-    const rDist = (0.020 + layer * 0.013) * (1 - 0.30 * rootU);
+    const rDist = (0.018 + layer * 0.012) * (1 - 0.30 * rootU);
     const start = new THREE.Vector3(
-      Math.cos(ringAngle) * rDist * 0.92,
-      dockY + Math.sin(ringAngle) * rDist * 0.48,
-      dockZ - (0.35 + 0.65 * Math.abs(Math.sin(ringAngle))) * rDist
+      Math.cos(ringAngle) * rDist * 0.88,
+      dockY + Math.sin(ringAngle) * rDist * 0.45,
+      dockZ - (0.25 + 0.55 * Math.abs(Math.sin(ringAngle))) * rDist
     );
-    pushOutsideHorseSurface(start, 0.004 + layer * 0.005, 3);
 
     const targetEndY = 0.34 + rng() * 0.22 + (layer === 0 ? 0.04 : 0);
     const dropLen = Math.max(0.58, start.y - targetEndY);
@@ -389,7 +389,7 @@ export function buildTailHairGeometry(boneIndex) {
       shadeMid:  layer === 0 ? 0.66 : layer === 1 ? 0.90 : 1.0,
       shadeTip:  layer === 0 ? 0.54 : 0.84,
       warmShift: (rng() - 0.3) * 0.7,
-      weightFn: (_p, v) => chainWeights(clamp(rootU * 0.30 + v * 0.88, 0, 1), tailControls, 1.2),
+      weightFn: (_p, v) => chainWeights(clamp(v * 0.96 + rootU * 0.06, 0, 1), tailControls, 1.25),
     });
   }
 

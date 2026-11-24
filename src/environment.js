@@ -384,6 +384,42 @@ export function createSceneEnvironment(scene, renderer, initialPreset = 'goldenH
   const motes = createAtmosphericMotes();
   scene.add(motes);
 
+  // Subtle passing meadow reference stones & clover mounds outside the hoof lanes (|x| > 0.75 m)
+  // moving at the EXACT physical hoof ground velocity so zero-slip traction is immediately visible!
+  const markerCount = 48;
+  const markerGeo = new THREE.DodecahedronGeometry(0.065, 1);
+  markerGeo.scale(1.3, 0.38, 1.1);
+  const markerMat = new THREE.MeshStandardMaterial({
+    color: 0x6f6c58,
+    roughness: 0.96,
+    metalness: 0.0,
+  });
+  const markers = new THREE.InstancedMesh(markerGeo, markerMat, markerCount);
+  markers.receiveShadow = true;
+  markers.castShadow = true;
+  const mRng = mulberry32(44199);
+  const markerData = [];
+  const dummy = new THREE.Object3D();
+  const mCol = new THREE.Color();
+  for (let i = 0; i < markerCount; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const mx = side * (0.85 + Math.pow(mRng(), 0.75) * 9.5);
+    const mz = (mRng() - 0.5) * 24.0;
+    const sc = 0.55 + mRng() * 1.15;
+    const rotY = mRng() * Math.PI * 2;
+    markerData.push({ x: mx, z: mz, sc, rotY });
+    dummy.position.set(mx, 0.01 * sc, mz);
+    dummy.rotation.set(0, rotY, 0);
+    dummy.scale.set(sc, sc, sc);
+    dummy.updateMatrix();
+    markers.setMatrixAt(i, dummy.matrix);
+    mCol.setHSL(0.18 + (mRng() - 0.5) * 0.08, 0.20 + mRng() * 0.14, 0.28 + mRng() * 0.16);
+    markers.setColorAt(i, mCol);
+  }
+  markers.instanceMatrix.needsUpdate = true;
+  if (markers.instanceColor) markers.instanceColor.needsUpdate = true;
+  scene.add(markers);
+
   function setLightingPreset(key) {
     const p = LIGHTING_PRESETS[key] || LIGHTING_PRESETS.goldenHour;
     sky.uniforms.uTopColor.value.setHex(p.skyTop);
@@ -412,24 +448,41 @@ export function createSceneEnvironment(scene, renderer, initialPreset = 'goldenH
     groundMat.roughness = key === 'studio' ? 0.68 : 0.94;
     hillMat.color.setHex(p.hillColor);
     hills.visible = key !== 'studio';
+    markers.visible = key !== 'studio';
     motes.visible = key === 'goldenHour';
     renderer.toneMappingExposure = p.exposure;
   }
 
   setLightingPreset(initialPreset);
 
-  // Scroll ground turf & drift sunlit atmospheric motes synchronously with gait velocity!
-  function updateGroundMotion(dt, mode, speed) {
-    const speedMap = { stance: 0, idle: 0, walk: 1.45, trot: 3.15, gallop: 5.9 };
-    const v = (speedMap[mode] || 0) * speed;
-    if (v > 0) {
-      const deltaUV = (v * dt) / 4.2;
-      groundTex.map.offset.y = (groundTex.map.offset.y - deltaUV) % 1;
+  // Scroll ground turf, subtle ground markers & sunlit motes at the EXACT physical hoof velocity `speedMps`!
+  // CircleGeometry radius = 46 m -> diameter = 92 m -> 22 texture repeats => 1 UV repeat = 92 / 22 = 4.1818 m!
+  const METERS_PER_UV_TILE = (46 * 2) / 22;
+
+  function updateGroundMotion(dt, speedMps) {
+    if (speedMps > 0.001) {
+      const dz = speedMps * dt;
+      // CircleGeometry rotated -PI/2 around X maps v_geom increasing toward world -Z.
+      // Decreasing offset.y shifts texture features toward higher v_geom => world -Z (backward under planted hooves!).
+      const deltaUV = dz / METERS_PER_UV_TILE;
+      groundTex.map.offset.y = (groundTex.map.offset.y - deltaUV + 1) % 1;
       groundTex.bumpMap.offset.y = groundTex.map.offset.y;
+
+      for (let i = 0; i < markerCount; i++) {
+        const m = markerData[i];
+        m.z -= dz;
+        if (m.z < -12.0) m.z += 24.0;
+        dummy.position.set(m.x, 0.01 * m.sc, m.z);
+        dummy.rotation.set(0, m.rotY, 0);
+        dummy.scale.set(m.sc, m.sc, m.sc);
+        dummy.updateMatrix();
+        markers.setMatrixAt(i, dummy.matrix);
+      }
+      markers.instanceMatrix.needsUpdate = true;
 
       const posAttr = motes.geometry.attributes.position;
       for (let i = 0; i < posAttr.count; i++) {
-        let mz = posAttr.getZ(i) - v * dt * 0.65;
+        let mz = posAttr.getZ(i) - dz * 0.72;
         if (mz < -4.5) mz += 9.0;
         posAttr.setZ(i, mz);
       }

@@ -17,14 +17,20 @@ An anatomically sculpted, animated 3D Warmblood/Thoroughbred horse built procedu
 - **Procedural PBR Coats** (`src/horse/materials.js`):
   - 1024×1024 directional short-horsehair albedo, bump, and roughness maps paired with linear-calibrated 3D anatomical vertex pigmentation and grazing-angle velvet sheen.
   - 5 breed-authentic coats: **Blood Bay**, **Dapple Gray**, **Friesian Black**, **Golden Palomino**, and **Copper Chestnut**.
-- **39-Bone Skeletal Rig & Biomechanical Gaits** (`src/horse/anatomy.js`, `src/horse/gaitAnimation.js`):
-  - **Idle** (breathing ribcage, gaze sweep, independent ear swivels, blinking, tail swish), 4-beat **Walk**, 2-beat diagonal **Trot**, asymmetric **Gallop**, and show **Stance**.
+- **39-Bone Skeletal Rig & Analytic Equine IK Locomotion** (`src/horse/anatomy.js`, `src/horse/equineIK.js`, `src/horse/gaitAnimation.js`):
+  - Exact 2-bone sagittal Law-of-Cosines IK solving `Elbow -> Knee -> Fetlock` (backward flexion only) and `Stifle -> Hock -> Fetlock` (forward flexion only) directly to ground-locked hoof trajectories.
+  - Eadweard Muybridge footfall phasing & biological duty factors: 4-beat **Walk** ($\beta = 0.64$), 2-beat diagonal **Trot** ($\beta = 0.43$ with aerial suspension), and 4-beat transverse **Gallop** ($\beta = 0.30$ with 4-hoof gathered flying suspension, lumbar spine coiling/extension, pre-impact hoof retraction, elastic fetlock shock absorption, and 1:1 ground-velocity lock).
+  - Second-order damped spring-pendulum physics for natural gravity-arched tail flow and lively **Idle** breathing, gaze sweeps, ear swivels, and blinking.
 - **Interactive Viewport & Lighting** (`src/main.js`, `src/environment.js`):
   - Smooth OrbitControls, camera presets (`3/4 Hero`, `Side`, `Head`, `Front`, `Rear`, `Top`), 3 lighting environments (`Golden Hour`, `Equine Studio`, `Soft Meadow`), animation speed slider, and keyboard shortcuts (`1`–`5` gaits, `Space` pause/resume, `R` reset camera).
 
 | Right Profile (Flowing Mane) | Dapple Gray Trot (Studio) |
 | :---: | :---: |
 | ![Right Profile](docs/side-right.png) | ![Dapple Gray Trot](docs/dapple-trot.png) |
+
+| Gathered Gallop Suspension | Muybridge 8-Phase Gallop Study |
+| :---: | :---: |
+| ![Gallop Flight](docs/gallop-flight.png) | ![Gallop Study](docs/gallop-study.png) |
 
 ## Quick Start
 
