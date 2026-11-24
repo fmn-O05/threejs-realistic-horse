@@ -1,0 +1,12 @@
+{
+  "name": "realistic-threejs-horse",
+  "version": "1.0.0",
+  "description": "Anatomically accurate, realistic animated 3D Warmblood/Thoroughbred horse built in Three.js.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  }
+}
